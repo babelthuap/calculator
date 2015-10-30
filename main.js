@@ -6,7 +6,7 @@ $(document).ready(function() {
   $('#calculator div:not(#display)').click(buttonPressed);
 
   function buttonPressed(event) {
-    console.log(event.target.id); // DEBUG
+    //console.log(event.target.id); // DEBUG
 
     let buttonID = event.target.id;
     let expression = $expression.text();
@@ -21,7 +21,7 @@ $(document).ready(function() {
       }
     } else if (buttonID === 'clear') {
       $expression.empty();
-    } else if (buttonID === 'sign' && (isNaN(lastToken) || lastToken === '~')) {
+    } else if (buttonID === 'sign' && (isNaN(+lastToken) || lastToken === '~')) {
       if (lastToken === '~') {
         $expression.text( expression.slice(0, expression.length - 1) );
       } else {
@@ -29,7 +29,7 @@ $(document).ready(function() {
       }
     } else {
 
-      if (!isNaN(lastToken) || lastToken === '%') {
+      if (!isNaN(+lastToken) || lastToken === '%') {
         let symbol;
 
         switch (buttonID) {
@@ -66,6 +66,34 @@ $(document).ready(function() {
     }
   }
 
+  var symbolDict = { 'c': 'clear',
+    '~': 'sign',
+    '%': 'percent',
+    '/': 'divide',
+    '*': 'multiply',
+    '-': 'subtract',
+    '+': 'add',
+    '.': 'decimal',
+    '=': 'equals'
+  };
+
+  // use keyboard input
+  $(window).on('keypress', function(event) {
+    let keyCode = event.keyCode;
+    let key = (event.keyCode === 13) ? '=' : String.fromCharCode(keyCode); 
+    console.log('key:', key);
+
+    if (!isNaN(+key) && key !== ' ') {
+      buttonPressed({
+        target: {id: key}
+      });
+    } else if (symbolDict.hasOwnProperty(key)) {
+      buttonPressed({
+        target: {id: symbolDict[key]}
+      });
+    }
+  });
+
   Array.prototype.indexOfEither = function(a, b) {
     let aIndex = this.indexOf(a);
     let bIndex = this.indexOf(b);
@@ -80,7 +108,7 @@ $(document).ready(function() {
 
   function evaluate(expression) {
     let tokens = expression.split(/([+\-*\/%~])/);
-    console.log(tokens);
+    //console.log(tokens); // DEBUG
 
     // ORDER OF OPERATIONS: %, ~, (* or /, left to right), (+ or -, left to right)
 
