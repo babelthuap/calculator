@@ -1,0 +1,39 @@
+#calculator {
+  font-family: monospace;
+  font-size: 20px;
+  width: 512px;
+  margin: auto;
+  border: 3px solid #400;
+  border-radius: 3px;
+}
+
+#display {
+  width: 100%;
+  height: 1.8em;
+  color: white;
+  background-color: #333;
+  text-align: right;
+  padding-top: 0.5em;
+}
+
+#display #expression {
+  padding-right: 0.3em;
+}
+
+#calculator div:not(#display) {
+  display: inline-block;
+  border: 1px solid black;
+  margin: 1px;
+  width: 23.3%;
+  height: 1.5em;
+  text-align: center;
+  cursor: pointer;
+}
+
+#calculator div:not(#display):active {
+  background-color: #BBB;
+}
+
+#\30 {
+  width: 47.5% !important;
+}
