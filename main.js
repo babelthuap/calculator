@@ -10,7 +10,12 @@ $(document).ready(function() {
 
     let buttonID = event.target.id;
     let expression = $expression.text();
-    let lastToken = expression[expression.length - 1];
+    let prevChar = expression[expression.length - 1];
+
+    if (expression === 'NaN') {
+      $expression.empty();
+      expression = '';
+    }
 
     if (!isNaN(+buttonID)) {
       $expression.text( expression + buttonID );
@@ -21,15 +26,18 @@ $(document).ready(function() {
       }
     } else if (buttonID === 'clear') {
       $expression.empty();
-    } else if (buttonID === 'sign' && (isNaN(+lastToken) || lastToken === '~')) {
-      if (lastToken === '~') {
+    } else if (buttonID === 'sign' && (isNaN(+prevChar) || prevChar === '~')) {
+      if (prevChar === '~') {
         $expression.text( expression.slice(0, expression.length - 1) );
       } else {
         $expression.text( expression + '~' );
       }
     } else {
 
-      if (!isNaN(+lastToken) || lastToken === '%') {
+      let tokens = expression.split(/([+\-*\/%~])/);
+      let lastToken = tokens[tokens.length - 1];
+      
+      if (!isNaN(+prevChar) || prevChar === '%' || lastToken === 'Infinity') {
         let symbol;
 
         switch (buttonID) {
@@ -46,7 +54,7 @@ $(document).ready(function() {
             symbol = '/';
             break;
           case 'percent':
-            symbol = (lastToken === '%') ? '' : '%';
+            symbol = (prevChar === '%') ? '' : '%';
             break;
           case 'sign':
             // this is a special case handled above
@@ -114,13 +122,27 @@ $(document).ready(function() {
   }
 
   function evaluate(expression) {
-    let tokens = expression.split(/([+\-*\/%~])/);
+    let tokens = expression.split(/((?:e\+)|[+\-*\/%~])/);
+
+    tokens = tokens.map(function(token) {
+      return isNaN(token) ? token : +token;
+    });
+
+    // console.log(tokens);
 
     // ORDER OF OPERATIONS: %, ~, (* or /, left to right), (+ or -, left to right)
 
+    var exponentPos = tokens.indexOf('e+');
+    while (exponentPos !== -1) {
+      var computed = tokens[exponentPos - 1] * Math.pow(10, tokens[exponentPos + 1]);
+      tokens = substitute(tokens, computed, exponentPos);
+
+      exponentPos = tokens.indexOf('e+');
+    }
+
     var percentPos = tokens.indexOf('%');
     while (percentPos !== -1) {
-      var computed = +tokens[percentPos - 1] * 0.01;
+      var computed = tokens[percentPos - 1] * 0.01;
       tokens = substitute(tokens, computed, percentPos);
 
       percentPos = tokens.indexOf('%');
@@ -128,7 +150,7 @@ $(document).ready(function() {
 
     var negatePos = tokens.indexOf('~');
     while (negatePos !== -1) {
-      var computed = -+tokens[negatePos + 1];
+      var computed = -tokens[negatePos + 1];
       tokens = substitute(tokens, computed, negatePos);
       
       negatePos = tokens.indexOf('~');
@@ -138,9 +160,9 @@ $(document).ready(function() {
     while (multOrDivPos !== -1) {
 
       if (tokens[multOrDivPos] === '*') {
-        var computed = +tokens[multOrDivPos - 1] * +tokens[multOrDivPos + 1];
+        var computed = tokens[multOrDivPos - 1] * tokens[multOrDivPos + 1];
       } else {
-        var computed = +tokens[multOrDivPos - 1] / +tokens[multOrDivPos + 1];
+        var computed = tokens[multOrDivPos - 1] / tokens[multOrDivPos + 1];
       }
 
       tokens = substitute(tokens, computed, multOrDivPos);
@@ -152,9 +174,9 @@ $(document).ready(function() {
     while (addOrSubPos !== -1) {
 
       if (tokens[addOrSubPos] === '+') {
-        var computed = +tokens[addOrSubPos - 1] + +tokens[addOrSubPos + 1];
+        var computed = tokens[addOrSubPos - 1] + tokens[addOrSubPos + 1];
       } else {
-        var computed = +tokens[addOrSubPos - 1] - +tokens[addOrSubPos + 1];
+        var computed = tokens[addOrSubPos - 1] - tokens[addOrSubPos + 1];
       }
 
       tokens = substitute(tokens, computed, addOrSubPos);
