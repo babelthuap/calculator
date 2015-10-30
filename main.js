@@ -41,25 +41,12 @@ $(document).ready(function() {
         let symbol;
 
         switch (buttonID) {
-          case 'add':
-            symbol = '+';
-            break;
-          case 'subtract':
-            symbol = '-';
-            break;
-          case 'multiply':
-            symbol = '*';
-            break;
-          case 'divide':
-            symbol = '/';
-            break;
-          case 'percent':
-            symbol = (prevChar === '%') ? '' : '%';
-            break;
-          case 'sign':
-            // this is a special case handled above
-            symbol = '';
-            break;
+          case 'add':      symbol = '+'; break;
+          case 'subtract': symbol = '-'; break;
+          case 'multiply': symbol = '*'; break;
+          case 'divide':   symbol = '/'; break;
+          case 'sign':     symbol = '';  break;
+          case 'percent':  symbol = (prevChar === '%') ? '' : '%'; break;
           case 'equals':
             symbol = evaluate(expression);
             expression = '';
