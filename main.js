@@ -81,7 +81,6 @@ $(document).ready(function() {
   $(window).on('keypress', function(event) {
     let keyCode = event.keyCode;
     let key = (event.keyCode === 13) ? '=' : String.fromCharCode(keyCode); 
-    console.log('key:', key);
 
     if (!isNaN(+key) && key !== ' ') {
       buttonPressed({
@@ -93,6 +92,8 @@ $(document).ready(function() {
       });
     }
   });
+
+  // These next two functions are used in the evaluate function below.
 
   Array.prototype.indexOfEither = function(a, b) {
     let aIndex = this.indexOf(a);
@@ -106,34 +107,31 @@ $(document).ready(function() {
     }
   }
 
+  function substitute(tokens, replacement, positionOfOperator) {
+    let before = tokens.slice(0, positionOfOperator - 1);
+    let after = tokens.slice(positionOfOperator + 2);
+    return before.concat([replacement]).concat(after);
+  }
+
   function evaluate(expression) {
     let tokens = expression.split(/([+\-*\/%~])/);
-    //console.log(tokens); // DEBUG
 
     // ORDER OF OPERATIONS: %, ~, (* or /, left to right), (+ or -, left to right)
 
     var percentPos = tokens.indexOf('%');
     while (percentPos !== -1) {
-
       var computed = +tokens[percentPos - 1] * 0.01;
+      tokens = substitute(tokens, computed, percentPos);
 
-      let before = tokens.slice(0, percentPos - 1);
-      let after = tokens.slice(percentPos + 2);
-      tokens = before.concat([computed]).concat(after);
-      
-      var percentPos = tokens.indexOf('%');
+      percentPos = tokens.indexOf('%');
     }
 
     var negatePos = tokens.indexOf('~');
     while (negatePos !== -1) {
-
       var computed = -+tokens[negatePos + 1];
-
-      let before = tokens.slice(0, negatePos - 1);
-      let after = tokens.slice(negatePos + 2);
-      tokens = before.concat([computed]).concat(after);
+      tokens = substitute(tokens, computed, negatePos);
       
-      var negatePos = tokens.indexOf('~');
+      negatePos = tokens.indexOf('~');
     }
 
     var multOrDivPos = tokens.indexOfEither('*', '/');
@@ -145,11 +143,9 @@ $(document).ready(function() {
         var computed = +tokens[multOrDivPos - 1] / +tokens[multOrDivPos + 1];
       }
 
-      let before = tokens.slice(0, multOrDivPos - 1);
-      let after = tokens.slice(multOrDivPos + 2);
-      tokens = before.concat([computed]).concat(after);
+      tokens = substitute(tokens, computed, multOrDivPos);
       
-      var multOrDivPos = tokens.indexOfEither('*', '/');
+      multOrDivPos = tokens.indexOfEither('*', '/');
     }
 
     var addOrSubPos = tokens.indexOfEither('+', '-');
@@ -161,11 +157,9 @@ $(document).ready(function() {
         var computed = +tokens[addOrSubPos - 1] - +tokens[addOrSubPos + 1];
       }
 
-      let before = tokens.slice(0, addOrSubPos - 1);
-      let after = tokens.slice(addOrSubPos + 2);
-      tokens = before.concat([computed]).concat(after);
+      tokens = substitute(tokens, computed, addOrSubPos);
       
-      var addOrSubPos = tokens.indexOfEither('+', '-');
+      addOrSubPos = tokens.indexOfEither('+', '-');
     }
 
     var result = '' + tokens[0];
